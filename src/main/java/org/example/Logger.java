@@ -2,7 +2,6 @@ package org.example;
 
 import java.sql.Time;
 
-import static org.example.ManagerApp.LOCAL_TO_MANAGER_REQUEST_QUEUE;
 import static org.example.ManagerApp.MANAGER_TO_LOCAL_REQUEST_QUEUE;
 
 public class Logger {

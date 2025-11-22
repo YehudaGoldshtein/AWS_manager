@@ -17,15 +17,16 @@ public class WorkerService {
 
     public static final String WORKER_ROLE = "EMR_EC2_DefaultRole";
     static final String WORKER_TAG = "WorkerInstance";
-    static final String workerAmiId =  "ami-071e30579bb36ab78"; // with java 17, more logs
+    static final String workerAmiId =  "ami-0deb2c104aa5011cc"; // with java 17, more logs
     public static final String MANAGER_REQUEST_QUEUE = "ManagerRequestQueue";
     public static final String WORKER_REQUEST_QUEUE = "WorkerRequestQueue";
+    public static final String MANAGER_TO_WORKER_REQUEST_QUEUE = "ManagerToWorkerRequestQueue";
     static final int MAX_WORKERS = 19;//amazon labm limit is 19 instances per account
     static final InstanceType WORKER_INSTANCE_TYPE = InstanceType.T1_MICRO;
     static final String MAX_WORKERS_ENV = "MAX_WORKERS";
     static final String INSTANCE_LIST_EMPTY_ERROR = "Error: EC2 instance list is empty after runInstances call.";
 
-    static final String jarName = "AWSRemote-1.0-SNAPSHOT-shaded.jar";
+    static final String jarName = "awsLocal-1.0.0.jar";
     static final String userDataScript =
             "#!/bin/bash\n" +
                     "cd /home/ec2-user\n" +
