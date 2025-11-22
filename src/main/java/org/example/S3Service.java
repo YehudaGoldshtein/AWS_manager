@@ -54,9 +54,18 @@ public class S3Service {
         }
     }
 
-    public static File downloadFile(String s3Path, String downloadAsFileName){
+    public static File downloadFile(String s3Path) {
         String key = s3Path.substring(s3Path.lastIndexOf("/") + 1);
+        //make a fileName based on time stamp to avoid collisions
+        String downloadAsFileName = "downloaded_" + System.currentTimeMillis();
         File outputFile = new File(downloadAsFileName);
+
+        // --- FIX START: Create the directory if it doesn't exist ---
+        if (outputFile.getParentFile() != null && !outputFile.getParentFile().exists()) {
+            outputFile.getParentFile().mkdirs();
+        }
+        // --- FIX END ---
+
         try {
             s3.getObject(GetObjectRequest.builder()
                             .bucket(bucketName)
@@ -66,8 +75,9 @@ public class S3Service {
             Logger.getLogger().log("File downloaded from S3: " + outputFile.getAbsolutePath());
         } catch (Exception e) {
             Logger.getLogger().log("Error downloading file from S3: " + e.getMessage());
+            // Return null or throw exception so the main loop knows it failed
+            return null;
         }
         return outputFile;
     }
-
 }

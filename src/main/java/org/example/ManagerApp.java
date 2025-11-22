@@ -47,7 +47,7 @@ public class ManagerApp {
                         SqsService.deleteMessage(LOCAL_TO_MANAGER_REQUEST_QUEUE, message);
                     }
                 }
-                else SqsService.sendMessage(MANAGER_TO_LOCAL_REQUEST_QUEUE, "I Am the manager and i have no messages from workers at this time.");
+                else SqsService.sendMessage(MANAGER_TO_LOCAL_REQUEST_QUEUE, "no messages from local apps at this time.");
 
             }
             postProccess();
@@ -106,7 +106,7 @@ public class ManagerApp {
 
     static void handleLocalAppMessage(Message message){
         Logger.getLogger().log("Handling local app message: " + message);
-        File file = S3Service.downloadFile(message.body(), "./downloads/openFile");
+        File file = S3Service.downloadFile(message.body());
         //parse lines
         try {
             BufferedReader reader = new BufferedReader(new java.io.FileReader(file));
