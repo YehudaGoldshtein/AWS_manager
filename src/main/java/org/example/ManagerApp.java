@@ -20,13 +20,13 @@ public class ManagerApp {
     public static final String WORKER_TO_MANAGER_REQUEST_QUEUE = "WorkerToManagerRequestQueue";
 
     public static void run(String[] args){
-        if (args.length != 3){
-            Logger.getLogger().log("Invalid arguments. Usage: <accessKeyId> <secretAccessKey> <sessionToken>");
+        if (args.length != 4){
+            Logger.getLogger().log("Invalid arguments. Usage: <accessKeyId> <secretAccessKey> <sessionToken> <workerAMI>");
             Logger.getLogger().log("got args: " + String.join(", ", args));
             return;
         }
         try {
-            WorkerService workerService = WorkerService.getInstance(args[0], args[1], args[2]);
+            WorkerService workerService = WorkerService.getInstance(args[0], args[1], args[2], args[3]);
 //            workerService.startWorkers()
             Instance workerInstance = workerService.getSingleWorker();
         }

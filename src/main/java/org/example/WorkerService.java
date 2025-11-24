@@ -17,7 +17,6 @@ public class WorkerService {
 
     public static final String WORKER_ROLE = "EMR_EC2_DefaultRole";
     static final String WORKER_TAG = "WorkerInstance";
-    static final String workerAmiId =  "ami-0deb2c104aa5011cc"; // with java 17, more logs
     public static final String MANAGER_REQUEST_QUEUE = "ManagerRequestQueue";
     public static final String WORKER_REQUEST_QUEUE = "WorkerRequestQueue";
     public static final String MANAGER_TO_WORKER_REQUEST_QUEUE = "ManagerToWorkerRequestQueue";
@@ -38,9 +37,12 @@ public class WorkerService {
 
     public Ec2Client ec2 = null;
 
+    String workerAmiId =  "ami-0deb2c104aa5011cc"; // will be dynamic from now on
+
+
     private static WorkerService instance = null;
 
-    public static WorkerService getInstance(String accessKeyId, String secretAccessKey, String sessionToken){
+    public static WorkerService getInstance(String accessKeyId, String secretAccessKey, String sessionToken, String workerAmiId){
 
         AwsSessionCredentials credentials = AwsSessionCredentials.create(accessKeyId, secretAccessKey, sessionToken);
         StaticCredentialsProvider provider = StaticCredentialsProvider.create(credentials);
@@ -52,6 +54,7 @@ public class WorkerService {
                 .region(Region.US_EAST_1)   // pick your region
                 .build();
 
+        instance.workerAmiId = workerAmiId;
         return instance;
     }
 
