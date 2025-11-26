@@ -65,45 +65,6 @@ public class WorkerService {
         return instance;
     }
 
-    @NotNull
-    public Instance getSingleWorker(){
-
-        List<Filter> filters = new ArrayList<>();
-
-        filters.add(Filter.builder()
-                .name("tag:Role")
-                .values(WORKER_TAG)
-                .build());
-
-        DescribeInstancesRequest request = DescribeInstancesRequest.builder()
-                .filters(filters)
-                .build();
-
-        DescribeInstancesResponse response = Ec2Client.create().describeInstances(request);
-
-        int activeWorkers = 0;
-        for (Reservation reservation : response.reservations()) {
-            for (Instance instance : reservation.instances()) {
-                Logger.getLogger().log("Found running worker instance: " + instance.instanceId());
-                //get instance state
-                InstanceStateName state =  instance.state().name();
-                Logger.getLogger().log("Instance state: " + state.toString());
-                if (state == InstanceStateName.STOPPED){
-                    Logger.getLogger().log("found stopped worker instance." + instance.instanceId());
-                    //return this instance
-                    return instance;
-                }
-                activeWorkers++;
-            }
-        }
-
-        Logger.getLogger().log("found " + activeWorkers + " active workers");
-        if (activeWorkers < MAX_WORKERS){
-            return setupSingleWorker();
-        }
-        else throw new RuntimeException(MAX_WORKERS_ENV + " limit reached. No new workers will be started.");
-
-    }
 
 //    public static Instance startSingleWorker(){
 //        Instance worker =  setupSingleWorker();
@@ -157,14 +118,8 @@ public class WorkerService {
      * @return Number of workers in running or pending state
      */
     public int countRunningWorkers() {
-        List<Filter> filters = new ArrayList<>();
-        filters.add(Filter.builder()
-                .name("tag:Role")
-                .values(WORKER_TAG)
-                .build());
 
         DescribeInstancesRequest request = DescribeInstancesRequest.builder()
-                .filters(filters)
                 .build();
 
         DescribeInstancesResponse response = ec2.describeInstances(request);
