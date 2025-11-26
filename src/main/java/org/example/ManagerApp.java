@@ -24,7 +24,7 @@ public class ManagerApp {
     private static WorkerService workerService = null;
 
     // ExecutorService for parallel request handling
-    private static ExecutorService executorService = Executors.newCachedThreadPool();
+    private static final ExecutorService executorService = Executors.newCachedThreadPool();
 
     // Termination flag
     private static volatile boolean shouldTerminate = false;
