@@ -17,6 +17,7 @@ public class WorkerService {
 
     public static final String WORKER_ROLE = "EMR_EC2_DefaultRole";
     static final String WORKER_TAG = "WorkerInstance";
+    static final String MANAGER_TAG = "ManagerInstance";
     public static final String MANAGER_REQUEST_QUEUE = "ManagerRequestQueue";
     public static final String WORKER_REQUEST_QUEUE = "WorkerRequestQueue";
     public static final String MANAGER_TO_WORKER_REQUEST_QUEUE = "ManagerToWorkerRequestQueue";
@@ -181,7 +182,7 @@ public class WorkerService {
      * @return Number of workers terminated
      */
     public int terminateAllWorkers() {
-        List<Instance> runningWorkers = getRunningWorkers();
+        List<Instance> runningWorkers = getRunningMachines(WORKER_TAG);
         int count = runningWorkers.size();
 
         if (count == 0) {
@@ -213,13 +214,13 @@ public class WorkerService {
     /**
      * Get list of all running workers
      */
-    private List<Instance> getRunningWorkers() {
+    private List<Instance> getRunningMachines(String tag) {
         List<Instance> runningWorkers = new ArrayList<>();
 
         List<Filter> filters = new ArrayList<>();
         filters.add(Filter.builder()
                 .name("tag:Role")
-                .values(WORKER_TAG)
+                .values(tag)
                 .build());
         filters.add(Filter.builder()
                 .name("instance-state-name")
@@ -243,6 +244,36 @@ public class WorkerService {
         }
 
         return runningWorkers;
+    }
+
+    public int terminateManager() {
+        List<Instance> runningWorkers = getRunningMachines(MANAGER_TAG);
+        int count = runningWorkers.size();
+
+        if (count == 0) {
+            Logger.getLogger().log("No manager to terminate");
+            return 0;
+        }
+
+        Logger.getLogger().log("Terminating " + count + " manager(s)...");
+
+        List<String> instanceIds = new ArrayList<>();
+        for (Instance instance : runningWorkers) {
+            instanceIds.add(instance.instanceId());
+        }
+
+        try {
+            TerminateInstancesRequest request = TerminateInstancesRequest.builder()
+                    .instanceIds(instanceIds)
+                    .build();
+
+            ec2.terminateInstances(request);
+            Logger.getLogger().log("Terminated " + count + " worker instance(s)");
+            return count;
+        } catch (Exception e) {
+            Logger.getLogger().log("Error terminating workers: " + e.getMessage());
+            return 0;
+        }
     }
 
 }

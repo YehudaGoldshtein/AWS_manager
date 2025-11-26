@@ -62,13 +62,6 @@ public class ManagerApp {
                         }
 
                         // If termination is requested, don't accept new jobs
-                        if (shouldTerminate) {
-                            Logger.getLogger().log("Termination requested, rejecting new job: " + message.body());
-                            SqsService.deleteMessage(LOCAL_TO_MANAGER_REQUEST_QUEUE, message);
-                            SqsService.sendMessage(MANAGER_TO_LOCAL_REQUEST_QUEUE,
-                                "ERROR;" + message.body() + ";Manager is terminating, cannot accept new jobs");
-                            continue;
-                        }
 
                         // Delete message immediately to avoid reprocessing
                         SqsService.deleteMessage(LOCAL_TO_MANAGER_REQUEST_QUEUE, message);
@@ -124,6 +117,9 @@ public class ManagerApp {
 
         }
         postProccess();
+        if (shouldTerminate){
+            terminateSelf();
+        }
 
     }
 
@@ -478,5 +474,13 @@ public class ManagerApp {
         } catch (Exception e) {
             Logger.getLogger().log("Error scaling workers: " + e.getMessage());
         }
+    }
+
+    static void terminateSelf(){
+        Logger.getLogger().log("Manager terminating itself as per request.");
+        // Clean up resources if needed
+        WorkerService.getInstance().terminateManager();
+        //shut down via ec2
+
     }
 }
