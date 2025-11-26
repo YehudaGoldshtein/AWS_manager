@@ -330,9 +330,6 @@ public class ManagerApp {
     private static boolean ExpectingMoreMessagesFromLocalApps() {
         // Return false if termination is requested and all jobs are complete
             return !JobInfo.getAllJobs().isEmpty();
-
-        // Otherwise, always return true to keep listening
-        return true;
     }
 
     static void handleLocalAppMessage(Message message){
