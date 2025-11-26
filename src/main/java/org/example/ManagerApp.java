@@ -98,6 +98,9 @@ public class ManagerApp {
                     Thread.currentThread().interrupt();
                     break;
                 }
+                if (!JobInfo.getAllJobs().isEmpty()){
+                    break;
+                }
             }
             postProccess();
         })
@@ -329,7 +332,7 @@ public class ManagerApp {
 
     private static boolean ExpectingMoreMessagesFromLocalApps() {
         // Return false if termination is requested and all jobs are complete
-            return !JobInfo.getAllJobs().isEmpty();
+        return shouldTerminate;
     }
 
     static void handleLocalAppMessage(Message message){
