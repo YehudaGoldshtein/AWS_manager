@@ -48,9 +48,11 @@ public class ManagerApp {
 
         // Thread for handling Local App messages (parallel processing)
         new Thread(()->{
+            Logger.getLogger().log("Local app message handler thread started");
             while (ExpectingMoreMessagesFromLocalApps()){
                 List<Message> messages = SqsService.getMessagesForQueue(LOCAL_TO_MANAGER_REQUEST_QUEUE);
                 if (!messages.isEmpty()){
+                    Logger.getLogger().log("Received " + messages.size() + " message(s) from local app");
                     for (Message message : messages) {
                         // Check for termination message
                         if (message.body().equals("TERMINATE")) {
@@ -62,6 +64,13 @@ public class ManagerApp {
                         }
 
                         // If termination is requested, don't accept new jobs
+                        if (shouldTerminate) {
+                            Logger.getLogger().log("Termination requested - rejecting new job: " + message.body());
+                            SqsService.deleteMessage(LOCAL_TO_MANAGER_REQUEST_QUEUE, message);
+                            SqsService.sendMessage(MANAGER_TO_LOCAL_REQUEST_QUEUE,
+                                "ERROR;" + message.body() + ";Manager is terminating, cannot accept new jobs");
+                            continue;
+                        }
 
                         // Delete message immediately to avoid reprocessing
                         SqsService.deleteMessage(LOCAL_TO_MANAGER_REQUEST_QUEUE, message);
@@ -104,37 +113,28 @@ public class ManagerApp {
         })
                 .start();
 
+        // Main loop: wait for worker messages and handle job completion
+        Logger.getLogger().log("Manager main loop started - waiting for worker messages");
         while (ExpectingMoreMessagesFromWorkers()){
             //get messages from workers, name of queue is misleading, will fix later
             List<Message> messages = SqsService.getMessagesForQueue(WORKER_TO_MANAGER_REQUEST_QUEUE);
             if (!messages.isEmpty()){
                 for (Message message : messages) {
-                    Logger.getLogger().log("Received message: " + message.body());
+                    Logger.getLogger().log("Received message from worker: " + message.body());
                     handleWorkerMessage(message);
                     SqsService.deleteMessage(WORKER_TO_MANAGER_REQUEST_QUEUE, message);
                 }
             }
-            // Don't send status messages when there are no worker messages - just wait
-            // Only send status if we're waiting for jobs to complete
-            if (JobInfo.getAllJobs().isEmpty() && !shouldTerminate) {
-                // No active jobs and no termination requested - wait a bit before checking again
-                try {
-                    Thread.sleep(1000); // 1 second
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
-            } else {
-                // Small sleep to avoid busy waiting
-                try {
-                    Thread.sleep(100); // 100ms
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                }
+            
+            // Small sleep to avoid busy waiting
+            try {
+                Thread.sleep(100); // 100ms
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
             }
-
         }
+        Logger.getLogger().log("Manager main loop exiting - calling postProccess");
         postProccess();
         if (shouldTerminate){
             terminateSelf();
@@ -433,11 +433,10 @@ public class ManagerApp {
                 // Send task to worker queue (format: ANALYSIS_TYPE\tURL)
                 SqsService.sendMessage(MANAGER_TO_WORKER_REQUEST_QUEUE, line);
                 taskCount++;
-                job.incrementTotalTasks();  // Track task creation
             }
             reader.close();
 
-            // Set total tasks for the job
+            // Set total tasks for the job (don't use incrementTotalTasks to avoid double counting)
             job.setTotalTasks(taskCount);
 
             Logger.getLogger().log("Created " + taskCount + " tasks from input file for job: " + jobId);
