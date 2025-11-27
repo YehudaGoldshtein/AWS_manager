@@ -448,8 +448,8 @@ public class ManagerApp {
                 file.delete();
             }
 
-            // Worker scaling: check queue and start workers if needed
-            scaleWorkers(filesPerWorker);
+            // Worker scaling: use taskCount directly (SQS queue count is eventually consistent and unreliable)
+            scaleWorkers(filesPerWorker, taskCount);
 
         } catch (IOException e) {
             Logger.getLogger().log("Error reading input file: " + e.getMessage());
@@ -459,23 +459,24 @@ public class ManagerApp {
     }
 
     /**
-     * Scale workers based on queue size and n (files per worker)
+     * Scale workers based on task count and n (files per worker)
      * According to assignment: create a worker for every n messages
+     * @param filesPerWorker Number of files each worker should handle
+     * @param taskCount Number of tasks just added (passed directly to avoid SQS eventual consistency issues)
      */
-    private static void scaleWorkers(int filesPerWorker) {
+    private static void scaleWorkers(int filesPerWorker, int taskCount) {
         if (workerService == null) {
             Logger.getLogger().log("Warning: WorkerService not initialized, cannot scale workers");
             return;
         }
 
         try {
-            // Count messages in worker queue
-            int queueMessageCount = SqsService.getQueueMessageCount(MANAGER_TO_WORKER_REQUEST_QUEUE);
-            Logger.getLogger().log("Worker queue has " + queueMessageCount + " messages");
+            // Use taskCount directly instead of querying SQS (which has eventual consistency)
+            Logger.getLogger().log("Tasks just added: " + taskCount);
 
-            // Calculate needed workers: ceil(queueMessageCount / filesPerWorker)
-            int neededWorkers = (int) Math.ceil((double) queueMessageCount / filesPerWorker);
-            Logger.getLogger().log("Needed workers: " + neededWorkers + " (based on " + queueMessageCount + " messages / " + filesPerWorker + " per worker)");
+            // Calculate needed workers: ceil(taskCount / filesPerWorker)
+            int neededWorkers = (int) Math.ceil((double) taskCount / filesPerWorker);
+            Logger.getLogger().log("Needed workers: " + neededWorkers + " (based on " + taskCount + " tasks / " + filesPerWorker + " per worker)");
 
             // Count currently running workers
             int currentWorkers = workerService.countRunningWorkers();
