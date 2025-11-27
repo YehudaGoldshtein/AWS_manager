@@ -332,7 +332,7 @@ public class ManagerApp {
 
     private static boolean ExpectingMoreMessagesFromLocalApps() {
         // Return false if termination is requested and all jobs are complete
-        return shouldTerminate;
+        return !shouldTerminate;
     }
 
     static void handleLocalAppMessage(Message message){
