@@ -59,6 +59,7 @@ public class ManagerApp {
         // Thread for handling Local App messages (parallel processing)
 
         Logger.getLogger().log("Local app message handler thread started");
+        Logger.getLogger().log("Lwill enter loop? " + ExpectingMoreMessagesFromLocalApps());
         while (ExpectingMoreMessagesFromLocalApps()){
             List<Message> messages = SqsService.getMessagesForQueue(LOCAL_TO_MANAGER_REQUEST_QUEUE);
             if (!messages.isEmpty()){
@@ -405,6 +406,7 @@ public class ManagerApp {
             while ((line = reader.readLine()) != null) {
                 // Skip empty lines
                 if (line.trim().isEmpty()) {
+                    Logger.getLogger().log("Warning: Skipping empty line");
                     continue;
                 }
 
